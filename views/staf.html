@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kunci PDF - Staf Rekam Medis</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-image: linear-gradient(rgba(15, 23, 42, 0.7), rgba(15, 23, 42, 0.7)),
+                              url('https://ik.imagekit.io/wn3l3cikt/bg.png');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            background-repeat: no-repeat;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255,255,255,0.4);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+            vertical-align: middle;
+            margin-right: 6px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        input[type="file"]::file-selector-button {
+            margin-right: 12px;
+            padding: 6px 14px;
+            border-radius: 9999px;
+            border: 0;
+            font-size: 12px;
+            font-weight: 600;
+            background: #d1fae5;
+            color: #065f46;
+            cursor: pointer;
+        }
+        input[type="file"]::file-selector-button:hover {
+            background: #a7f3d0;
+        }
+    </style>
+</head>
+<body class="min-h-screen py-10 px-4">
+
+    <div class="max-w-2xl mx-auto bg-white shadow-2xl rounded-2xl overflow-hidden">
+
+        <div class="bg-emerald-600 p-6 text-white text-center">
+            <h1 class="text-2xl font-bold">🔒 Kunci File PDF</h1>
+            <p class="text-emerald-100 text-sm mt-1">Portal Staf — Rekam Medis Rumah Sakit</p>
+        </div>
+
+        <div class="p-8">
+
+            <div id="panel-form">
+                <div class="mb-6">
+                    <h2 class="text-lg font-bold text-gray-800 flex items-center mb-4">
+                        <span class="bg-emerald-100 text-emerald-600 rounded-full h-8 w-8 flex items-center justify-center mr-2 text-sm">A</span>
+                        INFORMASI PENGGUNAAN
+                    </h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs text-gray-500">
+                        <div class="p-3 bg-gray-50 rounded-lg">1. Upload file PDF yang ingin dikunci.</div>
+                        <div class="p-3 bg-gray-50 rounded-lg">2. Masukkan password minimal 6 karakter.</div>
+                        <div class="p-3 bg-gray-50 rounded-lg">3. Klik tombol proses dan tunggu sebentar.</div>
+                        <div class="p-3 bg-gray-50 rounded-lg">4. File terenkripsi otomatis terunduh.</div>
+                    </div>
+                </div>
+
+                <div class="bg-yellow-50 border border-yellow-200 p-4 rounded-xl mb-6">
+                    <p class="text-sm text-yellow-800 font-bold mb-1">Catatan</p>
+                    <p class="text-xs text-yellow-700">File tidak disimpan di server. Proses dilakukan secara langsung melalui iLovePDF API dan file dihapus otomatis setelah selesai.</p>
+                </div>
+
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-2">File PDF</label>
+                        <div class="bg-gray-50 border border-dashed border-gray-300 rounded-xl p-3">
+                            <input type="file" id="pdfFile" accept="application/pdf"
+                                class="w-full text-sm text-gray-500 cursor-pointer">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Password PDF</label>
+                        <input type="password" id="password"
+                            placeholder="Masukkan password (min. 6 karakter)"
+                            class="w-full px-4 py-3 bg-gray-50 border rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none text-gray-700 text-sm">
+                    </div>
+
+                    <button id="submitBtn" onclick="uploadPDF()"
+                        class="w-full bg-emerald-600 text-white font-bold py-4 rounded-xl shadow-lg hover:bg-emerald-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-all uppercase tracking-widest">
+                        Proses & Kunci PDF
+                    </button>
+
+                    <div id="status" class="min-h-[20px] text-sm text-center"></div>
+                </div>
+            </div>
+
+            <div id="panel-success" class="hidden text-center py-10 space-y-4">
+                <div class="bg-emerald-100 w-24 h-24 rounded-full flex items-center justify-center mx-auto shadow-inner">
+                    <svg class="w-12 h-12 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                </div>
+                <h2 class="text-2xl font-bold text-gray-800">PDF Berhasil Dikunci!</h2>
+                <p class="text-gray-600 text-sm max-w-sm mx-auto leading-relaxed">
+                    File PDF terenkripsi sudah otomatis terunduh ke perangkat Anda.
+                </p>
+                <button onclick="resetForm()" class="mt-6 text-emerald-600 font-bold hover:underline">
+                    Kunci File Lain
+                </button>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        function resetForm() {
+            document.getElementById('panel-success').classList.add('hidden');
+            document.getElementById('panel-form').classList.remove('hidden');
+            document.getElementById('pdfFile').value = '';
+            document.getElementById('password').value = '';
+            document.getElementById('status').textContent = '';
+        }
+
+        async function uploadPDF() {
+            const fileInput = document.getElementById('pdfFile');
+            const password = document.getElementById('password').value;
+            const btn = document.getElementById('submitBtn');
+            const status = document.getElementById('status');
+
+            if (!fileInput.files[0]) {
+                status.className = 'text-sm text-center text-red-500';
+                status.textContent = '⚠️ Silakan pilih file PDF terlebih dahulu.';
+                return;
+            }
+            if (password.length < 6) {
+                status.className = 'text-sm text-center text-red-500';
+                status.textContent = '⚠️ Password minimal 6 karakter.';
+                return;
+            }
+
+            btn.disabled = true;
+            status.className = 'text-sm text-center text-gray-500';
+            status.innerHTML = '<span class="spinner"></span>Memproses, mohon tunggu...';
+
+            const formData = new FormData();
+            formData.append('pdfFile', fileInput.files[0]);
+            formData.append('password', password);
+
+            try {
+                const res = await fetch('/encrypt-pdf', {
+                    method: 'POST',
+                    body: formData,
+                });
+
+                if (!res.ok) {
+                    const msg = await res.text();
+                    throw new Error(msg || `Error ${res.status}`);
+                }
+
+                const blob = await res.blob();
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'PDF_Terkunci.pdf';
+                a.click();
+                URL.revokeObjectURL(url);
+
+                document.getElementById('panel-form').classList.add('hidden');
+                document.getElementById('panel-success').classList.remove('hidden');
+
+            } catch (err) {
+                status.className = 'text-sm text-center text-red-500';
+                status.textContent = `❌ ${err.message}`;
+            } finally {
+                btn.disabled = false;
+            }
+        }
+    </script>
+</body>
+</html>

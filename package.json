@@ -1,0 +1,27 @@
+{
+  "name": "layanan-pelepasan-informasi-medis",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rmwlingi2026-droid/Layanan-Pelepasan-Informasi-Medis.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/rmwlingi2026-droid/Layanan-Pelepasan-Informasi-Medis/issues"
+  },
+  "homepage": "https://github.com/rmwlingi2026-droid/Layanan-Pelepasan-Informasi-Medis#readme",
+  "dependencies": {
+    "dotenv": "^17.4.2",
+    "ejs": "^5.0.2",
+    "express": "^5.2.1",
+    "multer": "^2.1.1"
+  }
+}

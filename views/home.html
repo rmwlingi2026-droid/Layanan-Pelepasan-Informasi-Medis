@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Permohonan Pelepasan Informasi Medis</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .step-content { display: none; transition: opacity 0.3s ease; }
+        .step-active { display: block; opacity: 1; }
+        body {
+                background-image: linear-gradient(rgba(15, 23, 42, 0.7), rgba(15, 23, 42, 0.7)),
+                                  url('https://ik.imagekit.io/wn3l3cikt/bg.png');
+                background-size: cover;
+                background-position: center;
+                background-attachment: fixed;
+                background-repeat: no-repeat;
+            }
+    </style>
+</head>
+<body class="min-h-screen py-10 px-4">
+
+    <div class="max-w-2xl mx-auto bg-white shadow-2xl rounded-2xl overflow-hidden">
+
+        <div class="bg-emerald-600 p-6 text-white text-center">
+            <h1 class="text-2xl font-bold">Pelepasan Informasi Medis</h1>
+            <p class="text-emerald-100 text-sm mt-1">Layanan Resmi Informasi Rekam Medis Rumah Sakit</p>
+        </div>
+
+        <div class="p-8">
+
+            <div id="step-1" class="step-content step-active">
+                <div class="mb-6">
+                    <h2 class="text-lg font-bold text-gray-800 flex items-center mb-4">
+                        <span class="bg-emerald-100 text-emerald-600 rounded-full h-8 w-8 flex items-center justify-center mr-2 text-sm">A</span>
+                        PERSYARATAN
+                    </h2>
+                    <ul class="space-y-3 text-gray-600 text-sm border-l-4 border-emerald-500 pl-4 ml-4 italic">
+                        <li>1. Surat pernyataan pelepasan informasi bermaterai Rp.10.000</li>
+                        <li>2. Surat izin pelepasan informasi kesehatan</li>
+                        <li>3. Surat kuasa bermaterai Rp.10.000 (jika dikuasakan)</li>
+                        <li>4. Foto KK & KTP Pasien + Ahli Waris (jika pasien meninggal)</li>
+                    </ul>
+                </div>
+
+                <div class="mb-8">
+                    <h2 class="text-lg font-bold text-gray-800 flex items-center mb-4">
+                        <span class="bg-emerald-100 text-emerald-600 rounded-full h-8 w-8 flex items-center justify-center mr-2 text-sm">B</span>
+                        ALUR PENGAJUAN
+                    </h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs text-gray-500">
+                        <div class="p-3 bg-gray-50 rounded-lg">1. Unduh & Lengkapi berkas persyaratan.</div>
+                        <div class="p-3 bg-gray-50 rounded-lg">2. Isi formulir & unggah dokumen.</div>
+                        <div class="p-3 bg-gray-50 rounded-lg">3. Verifikasi dokumen oleh petugas.</div>
+                        <div class="p-3 bg-gray-50 rounded-lg">4. Estimasi proses ± 3 hari kerja.</div>
+                    </div>
+                </div>
+
+                <div class="bg-yellow-50 border border-yellow-200 p-4 rounded-xl mb-6">
+    <p class="text-sm text-yellow-800 font-medium mb-2 font-bold">Unduh Berkas Sebelum Melanjutkan:</p>
+    <div class="flex flex-wrap gap-2">
+        <a href="https://ik.imagekit.io/wn3l3cikt/KOP%202025%20WLINGI.docx" class="bg-white border border-yellow-400 text-yellow-700 px-3 py-1 rounded text-xs hover:bg-yellow-100 flex items-center">
+            ⬇️ Form Pernyataan Pelepasan Informasi Medis
+        </a>
+        <a href="https://ik.imagekit.io/wn3l3cikt/SURAT%20KUASA_PELEPASAN%20INFORMASI.docx" class="bg-white border border-yellow-400 text-yellow-700 px-3 py-1 rounded text-xs hover:bg-yellow-100 flex items-center">
+            ⬇️ Contoh Surat Kuasa
+        </a>
+
+    </div>
+</div>
+
+                <label class="flex items-center space-x-3 cursor-pointer p-3 bg-slate-50 rounded-lg mb-6 border border-slate-200">
+                    <input type="checkbox" id="agree-check" class="h-5 w-5 text-emerald-600 rounded">
+                    <span class="text-sm text-gray-700 font-medium">Saya telah memahami persyaratan dan sudah menyiapkan berkas yang diperlukan.</span>
+                </label>
+
+                <button id="to-step-2" onclick="window.location.href = 'https://forms.gle/aTCNPGtyMiLW5LvD9'" disabled class="w-full bg-emerald-600 text-white font-bold py-4 rounded-xl shadow-lg hover:bg-emerald-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-all">
+                    MULAI MENGISI FORMULIR
+                </button>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        const agreeCheck = document.getElementById('agree-check');
+        const toStep2 = document.getElementById('to-step-2');
+
+        agreeCheck.addEventListener('change', () => { toStep2.disabled = !agreeCheck.checked; });
+    </script>
+</body>
+</html>
