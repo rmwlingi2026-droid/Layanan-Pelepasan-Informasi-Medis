@@ -8,9 +8,13 @@ const app = express();
 const PUBLIC_KEY = process.env.PUBLIC_KEY_IPDF;
 const SECRET_KEY = process.env.API_KEY_IPDF;
 
+// ================== KONFIGURASI MULTER ==================
+// Batas maksimal ukuran file disesuaikan dengan limit Vercel (4.5 MB)
+const MAX_FILE_SIZE = 4.5 * 1024 * 1024; 
+
 const upload = multer({
     storage: multer.memoryStorage(),
-    limits: { fileSize: 30 * 1024 * 1024 } // 30MB
+    limits: { fileSize: MAX_FILE_SIZE } 
 });
 
 app.use(express.urlencoded({ extended: true }));
@@ -22,10 +26,20 @@ app.get('/', (req, res) => {
 
 app.get('/staf', (req, res) => {
     res.sendFile(path.join(__dirname, '..', 'views', 'staf.html'));
-})
+});
 
 // ================== ENCRYPT PDF ==================
-app.post('/encrypt-pdf', upload.single('pdfFile'), async (req, res) => {
+app.post('/encrypt-pdf', (req, res, next) => {
+    // Handling error bawaan multer jika file melebihi batas sebelum masuk ke logic utama
+    upload.single('pdfFile')(req, res, (err) => {
+        if (err instanceof multer.MulterError && err.code === 'LIMIT_FILE_SIZE') {
+            return res.status(400).send('Gagal: Ukuran file PDF melebihi batas maksimal 4.5 MB.');
+        } else if (err) {
+            return res.status(500).send(`Terjadi kesalahan upload: ${err.message}`);
+        }
+        next();
+    });
+}, async (req, res) => {
     if (!req.file) {
         return res.status(400).send('Silakan upload file PDF');
     }
