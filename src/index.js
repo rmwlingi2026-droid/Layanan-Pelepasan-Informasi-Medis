@@ -9,7 +9,7 @@ const PUBLIC_KEY = process.env.PUBLIC_KEY_IPDF;
 const SECRET_KEY = process.env.API_KEY_IPDF;
 
 // ================== KONFIGURASI MULTER ==================
-// Batas maksimal ukuran file disesuaikan dengan limit Vercel (4.5 MB)
+// 📝 CATATAN: Maksimal ukuran file yang dapat dikunci dibatasi sebesar 4.5 MB (Menyesuaikan limit payload Vercel)
 const MAX_FILE_SIZE = 4.5 * 1024 * 1024; 
 
 const upload = multer({
@@ -33,7 +33,8 @@ app.post('/encrypt-pdf', (req, res, next) => {
     // Handling error bawaan multer jika file melebihi batas sebelum masuk ke logic utama
     upload.single('pdfFile')(req, res, (err) => {
         if (err instanceof multer.MulterError && err.code === 'LIMIT_FILE_SIZE') {
-            return res.status(400).send('Gagal: Ukuran file PDF melebihi batas maksimal 4.5 MB.');
+            // 📝 CATATAN: Pesan error eksplisit jika file melampaui batas maksimal 4.5 MB
+            return res.status(400).send('Gagal: Ukuran file PDF melebihi batas maksimal yang diperbolehkan (Maksimal 4.5 MB).');
         } else if (err) {
             return res.status(500).send(`Terjadi kesalahan upload: ${err.message}`);
         }
@@ -41,7 +42,7 @@ app.post('/encrypt-pdf', (req, res, next) => {
     });
 }, async (req, res) => {
     if (!req.file) {
-        return res.status(400).send('Silakan upload file PDF');
+        return res.status(400).send('Silakan upload file PDF maksimal 4,5 MB');
     }
 
     const password = req.body.password;
