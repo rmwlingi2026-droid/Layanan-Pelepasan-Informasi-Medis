@@ -6,9 +6,7 @@
     <title>Permohonan Pelepasan Informasi Medis | RSUD Ngudi Waluyo</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* Mengubah font global menjadi Times New Roman */
         body {
-            font-family: 'Times New Roman', Times, serif;
             background-image: linear-gradient(rgba(15, 23, 42, 0.75), rgba(15, 23, 42, 0.75)),
                               url('https://ik.imagekit.io/wn3l3cikt/bg.png');
             background-size: cover;
@@ -27,52 +25,228 @@
 </head>
 <body class="min-h-screen py-10 px-4 flex items-center justify-center">
 
-    <div id="page-intro" class="max-w-2xl w-full glass-card shadow-2xl rounded-2xl overflow-hidden border border-white/20">
+    <div id="page-intro" class="max-w-2xl w-full glass-card shadow-2xl rounded-2xl overflow-hidden border border-white/20 transition-all duration-300">
         
         <div class="bg-emerald-700 p-8 text-white text-center">
-            <h1 class="text-2xl font-bold tracking-tight">Portal Pengantar & Informasi Layanan</h1>
+            <h1 class="text-2xl font-bold tracking-tight">Selamat Datang di Portal Informasi Medis</h1>
             <div class="h-1 w-20 bg-emerald-400 mx-auto my-3 rounded-full"></div>
-            <p class="text-emerald-50 text-base font-medium">Layanan Resmi Rekam Medis RSUD Ngudi Waluyo Wlingi</p>
+            <p class="text-emerald-50 text-sm font-medium">RSUD Ngudi Waluyo Wlingi</p>
         </div>
 
         <div class="p-8 space-y-6">
             <div>
-                <h2 class="text-lg font-bold text-gray-800 uppercase tracking-wide border-b-2 border-emerald-600 pb-1 mb-3">
-                    A. Penjelasan Sistem & Projek
+                <h2 class="text-base font-bold text-gray-800 uppercase tracking-wide border-b-2 border-emerald-500 pb-1 mb-3">
+                     Tentang Layanan Ini
                 </h2>
-                <p class="text-sm text-gray-700 leading-relaxed text-justify">
-                    Sistem Pelepasan Informasi Medis Online ini merupakan inovasi dari Unit Rekam Medis RSUD Ngudi Waluyo Wlingi untuk memfasilitasi pasien, keluarga, atau pihak berwenang dalam mengajukan salinan rekam medis secara daring. Sistem ini dirancang untuk menjaga kerahasiaan data medis, memotong birokrasi yang rumit, serta mempercepat waktu pelayanan tanpa mewajibkan pemohon datang mengantre di rumah sakit.
+                <p class="text-sm text-gray-600 leading-relaxed text-justify">
+                    Sistem Pelepasan Informasi Medis Online ini dirancang untuk memberikan kemudahan, kecepatan, dan transparansi bagi pasien atau keluarga pasien dalam mengajukan salinan rekam medis secara resmi tanpa harus mengantre lama di rumah sakit.
                 </p>
             </div>
 
             <div>
-                <h2 class="text-lg font-bold text-gray-800 uppercase tracking-wide border-b-2 border-emerald-600 pb-1 mb-2">
-                    B. Informasi Medis yang Dapat Diperoleh
+                <h2 class="text-base font-bold text-gray-800 uppercase tracking-wide border-b-2 border-emerald-500 pb-1 mb-3">
+                     Informasi Medis Yang Dapat Diakses
                 </h2>
-                <p class="text-xs text-gray-500 mb-2 italic">*Sesuai dengan regulasi Peraturan Menteri Kesehatan, berkas yang dilepaskan merupakan ringkasan medis:</p>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm text-gray-700">
-                    <div class="flex items-center p-2 bg-emerald-50/60 rounded-lg border border-emerald-100">
-                        <span class="text-emerald-600 font-bold mr-2">✓</span> Ringkasan Penyakit & Resume Medis
+                <p class="text-xs text-gray-500 mb-2 italic">*Sesuai dengan regulasi yang berlaku, berkas yang diberikan berupa ringkasan medis (Resume Medis/Discharge Summary).</p>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-gray-700">
+                    <div class="flex items-center p-2 bg-emerald-50/50 rounded-lg border border-emerald-100">
+                        <span class="text-emerald-600 mr-2">✔</span> Ringkasan Hasil Pemeriksaan & Diagnosis
                     </div>
-                    <div class="flex items-center p-2 bg-emerald-50/60 rounded-lg border border-emerald-100">
-                        <span class="text-emerald-600 font-bold mr-2">✓</span> Hasil Pemeriksaan Laboratorium
+                    <div class="flex items-center p-2 bg-emerald-50/50 rounded-lg border border-emerald-100">
+                        <span class="text-emerald-600 mr-2">✔</span> Riwayat Tindakan Medis / Operasi
                     </div>
-                    <div class="flex items-center p-2 bg-emerald-50/60 rounded-lg border border-emerald-100">
-                        <span class="text-emerald-600 font-bold mr-2">✓</span> Hasil Pemeriksaan Penunjang (Rontgen, dll)
+                    <div class="flex items-center p-2 bg-emerald-50/50 rounded-lg border border-emerald-100">
+                        <span class="text-emerald-600 mr-2">✔</span> Hasil Laboratorium & Penunjang
                     </div>
-                    <div class="flex items-center p-2 bg-emerald-50/60 rounded-lg border border-emerald-100">
-                        <span class="text-emerald-600 font-bold mr-2">✓</span> Catatan Operasi & Riwayat Tindakan
+                    <div class="flex items-center p-2 bg-emerald-50/50 rounded-lg border border-emerald-100">
+                        <span class="text-emerald-600 mr-2">✔</span> Catatan Pengobatan / Terapi Pasien
                     </div>
                 </div>
             </div>
 
-            <div class="space-y-4">
-                <h2 class="text-lg font-bold text-gray-800 uppercase tracking-wide border-b-2 border-emerald-600 pb-1 mb-2">
-                    C. Hak dan Kewajiban
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="bg-blue-50/60 p-4 rounded-xl border border-blue-100">
+                    <h3 class="text-sm font-bold text-blue-900 uppercase tracking-wider mb-2 flex items-center">
+                         Hak Pemohon/Pasien
+                    </h3>
+                    <ul class="text-xs text-gray-700 space-y-2 list-disc pl-4">
+                        <li>Mendapatkan salinan resume medis milik pribadi sesuai ketentuan hukum.</li>
+                        <li>Mendapatkan jaminan kerahasiaan data selama proses verifikasi berlangsung.</li>
+                        <li>Mendapatkan informasi perkembangan status pengajuan berkas.</li>
+                    </ul>
+                </div>
+
+                <div class="bg-amber-50/60 p-4 rounded-xl border border-amber-100">
+                    <h3 class="text-sm font-bold text-amber-900 uppercase tracking-wider mb-2 flex items-center">
+                         Kewajiban Pemohon
+                    </h3>
+                    <ul class="text-xs text-gray-700 space-y-2 list-disc pl-4">
+                        <li>Memberikan identitas diri yang sah, valid, dan jujur (KTP/KK).</li>
+                        <li>Menjaga kerahasiaan dokumen medis yang telah diserahkan oleh pihak RS.</li>
+                        <li>Tidak menyalahgunakan dokumen medis untuk hal-hal yang melanggar hukum.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="pt-2">
+                <button id="next-page-btn" 
+                        class="w-full bg-emerald-600 text-white font-bold py-4 rounded-xl shadow-lg shadow-emerald-200 hover:bg-emerald-700 hover:shadow-emerald-300 transition-all flex items-center justify-center space-x-2 group">
+                    <span>LANJUTKAN KE PENGAJUAN FORMULIR</span>
+                    <svg class="w-5 h-5 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+
+    <div id="page-main" class="max-w-2xl w-full glass-card shadow-2xl rounded-2xl overflow-hidden border border-white/20 hidden">
+        
+        <div class="bg-emerald-700 p-8 text-white text-center">
+            <h1 class="text-2xl font-bold tracking-tight">Sistem Pelepasan Informasi Medis Online</h1>
+            <div class="h-1 w-20 bg-emerald-400 mx-auto my-3 rounded-full"></div>
+            <p class="text-emerald-50 text-sm font-medium">Layanan Resmi Rekam Medis RSUD Ngudi Waluyo Wlingi</p>
+        </div>
+
+        <div class="p-8">
+            <div class="mb-8">
+                <h2 class="text-lg font-bold text-gray-800 flex items-center mb-4 uppercase tracking-wide">
+                    <span class="bg-emerald-600 text-white rounded-lg h-8 w-8 flex items-center justify-center mr-3 text-sm shadow-md">1</span>
+                    Persyaratan Dokumen
                 </h2>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div class="bg-blue-50/60 p-4 rounded-xl border border-blue-100">
-                        <h3 class="text-sm font-bold text-blue-900 uppercase tracking-wider mb-2">
-                            Hak Pemohon / Pasien:
-                        </h3>
-                        <ul class="text-xs text-gray-700 space-y-2 list
+                <div class="bg-emerald-50/50 border-l-4 border-emerald-600 p-4 rounded-r-xl">
+                    <ul class="space-y-3 text-gray-700 text-sm">
+                        <li class="flex items-start">
+                            <span class="mr-2">•</span>
+                            <span>Mengisi surat pernyataan pelepasan informasi dan surat kuasa bermaterai <strong>Rp10.000</strong> (surat kuasa diperlukan jika dikuasakan ke pihak ketiga).</span>
+                        </li>
+                        <li class="flex items-start">
+                            <span class="mr-2">•</span>
+                            <span>Scan/Foto identitas pasien & pemohon (KTP dan Kartu Keluarga).</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="mb-8">
+                <h2 class="text-lg font-bold text-gray-800 flex items-center mb-6 uppercase tracking-wide">
+                    <span class="bg-emerald-600 text-white rounded-lg h-8 w-8 flex items-center justify-center mr-3 text-sm shadow-md">2</span>
+                    Alur Pelayanan
+                </h2>
+                
+                <div class="relative border-l-2 border-emerald-100 ml-4 space-y-6">
+                    <div class="relative pl-6">
+                        <span class="absolute -left-[11px] top-0.5 bg-emerald-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-[10px] font-bold shadow-sm">1</span>
+                        <h4 class="text-sm font-bold text-gray-800">Menyiapkan Persyaratan Dokumen</h4>
+                        <p class="text-xs text-gray-600 mt-1">Unduh berkas pernyataan dan contoh surat kuasa yang telah disediakan di bawah (isi menggunakan huruf balok dan tulis tangan).</p>
+                    </div>
+
+                    <div class="relative pl-6">
+                        <span class="absolute -left-[11px] top-0.5 bg-emerald-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-[10px] font-bold shadow-sm">2</span>
+                        <h4 class="text-sm font-bold text-gray-800">Mengisi Formulir Pengajuan</h4>
+                        <p class="text-xs text-gray-600 mt-1">Tekan tombol di paling bawah halaman untuk mulai mengisi data serta mengunggah dokumen syarat.</p>
+                    </div>
+
+                    <div class="relative pl-6">
+                        <span class="absolute -left-[11px] top-0.5 bg-emerald-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-[10px] font-bold shadow-sm">3</span>
+                        <h4 class="text-sm font-bold text-gray-800">Verifikasi oleh Petugas</h4>
+                        <p class="text-xs text-gray-600 mt-1">Tim Rekam Medis akan meninjau keabsahan berkas dan kelengkapan data yang Anda kirimkan.</p>
+                    </div>
+
+                    <div class="relative pl-6">
+                        <span class="absolute -left-[11px] top-0.5 bg-emerald-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-[10px] font-bold shadow-sm">4</span>
+                        <h4 class="text-sm font-bold text-gray-800">Proses Penyediaan Informasi</h4>
+                        <p class="text-xs text-emerald-700 font-semibold mt-1 bg-emerald-50 inline-block px-2 py-0.5 rounded border border-emerald-100">Waktu penyelesaian: ± 1-3 hari kerja (tergantung kelengkapan persyaratan).</p>
+                    </div>
+
+                    <div class="relative pl-6">
+                        <span class="absolute -left-[11px] top-0.5 bg-emerald-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-[10px] font-bold shadow-sm">5</span>
+                        <h4 class="text-sm font-bold text-gray-800">Pengiriman Dokumen Medis</h4>
+                        <p class="text-xs text-gray-600 mt-1">Salinan berkas rekam medis dikirimkan langsung melalui no whatsapp Anda yang sudah terdaftar.</p>
+                    </div>
+
+                    <div class="relative pl-6">
+                        <span class="absolute -left-[11px] top-0.5 bg-emerald-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-[10px] font-bold shadow-sm">6</span>
+                        <h4 class="text-sm font-bold text-gray-800">Unduh & Akses Dokumen</h4>
+                        <p class="text-xs text-gray-600 mt-1">Unduh berkas medis Anda dari email, lalu buka menggunakan kode rahasia (password) aman yang dikirimkan petugas.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-amber-50 border border-amber-200 p-5 rounded-2xl mb-8 shadow-sm">
+                <h3 class="text-sm text-amber-900 font-bold mb-3 flex items-center">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                    Unduh Berkas Sebelum Melanjutkan:
+                </h3>
+                <div class="flex flex-col gap-2">
+                    <a href="https://ik.imagekit.io/wllopzrr3/Surat%20Pernyataan%20Permohonan%20Pelepasan%20Informasi%20Medis.docx" 
+                       class="group bg-white border border-amber-300 text-amber-800 px-4 py-2.5 rounded-xl text-xs font-semibold hover:bg-amber-100 hover:border-amber-400 transition-all flex justify-between items-center shadow-sm">
+                        <span>Form Pernyataan Pelepasan Informasi Medis</span>
+                        <span class="bg-amber-100 text-amber-700 px-2 py-1 rounded text-[10px] group-hover:bg-amber-200 transition-colors">DOCX ↓</span>
+                    </a>
+                    
+                    <a href="https://ik.imagekit.io/wllopzrr3/Contoh%20Formulir%20Surat%20Kuasa.docx" 
+                       class="group bg-white border border-amber-300 text-amber-800 px-4 py-2.5 rounded-xl text-xs font-semibold hover:bg-amber-100 hover:border-amber-400 transition-all flex justify-between items-center shadow-sm">
+                        <span>Contoh Surat Kuasa</span>
+                        <span class="bg-amber-100 text-amber-700 px-2 py-1 rounded text-[10px] group-hover:bg-amber-200 transition-colors">DOCX ↓</span>
+                    </a>
+                </div>
+            </div>
+
+            <div class="space-y-4">
+                <label class="flex items-center space-x-3 cursor-pointer p-4 bg-gray-50 rounded-xl border border-gray-200 hover:border-emerald-300 transition-colors">
+                    <input type="checkbox" id="agree-check" class="h-5 w-5 text-emerald-600 border-gray-300 rounded focus:ring-emerald-500">
+                    <span class="text-sm text-gray-700 leading-tight"> <strong>Saya telah memahami seluruh persyaratan, alur pelayanan, dan saya telah menyetujui bahwa keamanan dan penggunaan berkas medis yang telah diterima menjadi tanggung jawab pribadi saya sepenuhnya, lepas dari tanggung jawab pihak rumah sakit.</strong> </span>
+                </label>
+
+                <div class="flex flex-col sm:flex-row gap-2">
+                    <button id="back-btn" type="button"
+                            class="sm:w-1/3 border border-gray-300 text-gray-600 font-bold py-4 rounded-xl hover:bg-gray-100 transition-all">
+                        KEMBALI
+                    </button>
+                    <button id="submit-btn" 
+                            onclick="window.location.href = 'https://forms.gle/aTCNPGtyMiLW5LvD9'" 
+                            disabled 
+                            class="sm:w-2/3 bg-emerald-600 text-white font-bold py-4 rounded-xl shadow-lg shadow-emerald-200 hover:bg-emerald-700 hover:shadow-emerald-300 disabled:bg-gray-300 disabled:shadow-none disabled:cursor-not-allowed transition-all transform active:scale-[0.98]">
+                        MULAI MENGISI FORMULIR
+                    </button>
+                </div>
+            </div>
+            
+            <p class="text-center text-[10px] text-gray-400 mt-6 uppercase tracking-widest font-medium italic">
+                Pastikan dokumen dalam format PDF atau Gambar yang jelas (Maksimal 4,5 MB)
+            </p>
+        </div>
+    </div>
+
+    <script>
+        // Inisialisasi Elemen
+        const pageIntro = document.getElementById('page-intro');
+        const pageMain = document.getElementById('page-main');
+        const nextBgBtn = document.getElementById('next-page-btn');
+        const backBtn = document.getElementById('back-btn');
+        const agreeCheck = document.getElementById('agree-check');
+        const submitBtn = document.getElementById('submit-btn');
+
+        // Navigasi: Ke Halaman Utama
+        nextBgBtn.addEventListener('click', () => {
+            pageIntro.classList.add('hidden');
+            pageMain.classList.remove('hidden');
+            window.scrollTo(0, 0); // Reset scroll ke atas
+        });
+
+        // Navigasi: Kembali ke Halaman Pengantar
+        backBtn.addEventListener('click', () => {
+            pageMain.classList.add('hidden');
+            pageIntro.classList.remove('hidden');
+            window.scrollTo(0, 0); // Reset scroll ke atas
+        });
+
+        // Logika Checkbox Persetujuan di Halaman Utama
+        agreeCheck.addEventListener('change', () => {
+            submitBtn.disabled = !agreeCheck.checked;
+        });
+    </script>
+</body>
+</html>
