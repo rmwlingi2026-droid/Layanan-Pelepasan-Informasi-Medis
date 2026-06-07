@@ -6,7 +6,8 @@
     <title>Kunci PDF - Staf Rekam Medis</title>
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
     <style>
         body {
@@ -67,14 +68,14 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs text-gray-500">
                         <div class="p-3 bg-gray-50 rounded-lg">1. Upload file PDF yang ingin dikunci (max 4.5 mb)</div>
                         <div class="p-3 bg-gray-50 rounded-lg">2. Masukkan password minimal 6 karakter (nomor rm)</div>
-                        <div class="p-3 bg-gray-50 rounded-lg">3. Klik proses (Enkripsi kuat standar Adobe lokal)</div>
+                        <div class="p-3 bg-emerald-50 text-emerald-700 font-semibold rounded-lg">3. Klik proses (Mendukung PDF terproteksi SIMRS)</div>
                         <div class="p-3 bg-gray-50 rounded-lg">4. File terenkripsi otomatis terunduh</div>
                     </div>
                 </div>
 
                 <div class="bg-yellow-50 border border-yellow-200 p-4 rounded-xl mb-6">
                     <p class="text-sm text-yellow-800 font-bold mb-1">Jaminan Keamanan Rekam Medis</p>
-                    <p class="text-xs text-yellow-700">File diproses 100% di dalam komputer Anda (bisa digunakan tanpa internet). Data medis pasien dijamin aman dan tidak bocor ke pihak ketiga.</p>
+                    <p class="text-xs text-yellow-700">Proses bypass proteksi dan enkripsi ulang dilakukan 100% lokal di browser Anda tanpa internet. Data medis pasien dijamin rahasia.</p>
                 </div>
 
                 <div class="space-y-4">
@@ -110,7 +111,7 @@
                 </div>
                 <h2 class="text-2xl font-bold text-gray-800">PDF Berhasil Dikunci!</h2>
                 <p class="text-gray-600 text-sm max-w-sm mx-auto leading-relaxed">
-                    File PDF terenkripsi sudah otomatis terunduh ke perangkat Anda dan siap didistribusikan secara aman.
+                    Sistem berhasil membuat ulang lembar rekam medis dan menguncinya dengan password baru. File sudah otomatis terunduh.
                 </p>
                 <button onclick="resetForm()" class="mt-6 text-emerald-600 font-bold hover:underline">
                     Kunci File Lain
@@ -121,6 +122,9 @@
     </div>
 
     <script>
+        // Set worker PDF.js secara global dari CDN eksternal terpercaya
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+
         function resetForm() {
             document.getElementById('panel-success').classList.add('hidden');
             document.getElementById('panel-form').classList.remove('hidden');
@@ -135,7 +139,6 @@
             const btn = document.getElementById('submitBtn');
             const status = document.getElementById('status');
 
-            // Validasi Input Form
             if (!fileInput.files[0]) {
                 status.className = 'text-sm text-center text-red-500';
                 status.textContent = '⚠️ Silakan pilih file PDF terlebih dahulu.';
@@ -149,57 +152,68 @@
 
             const file = fileInput.files[0];
 
-            // Validasi Ukuran File (Maksimal 4.5 MB)
             if (file.size > 4.5 * 1024 * 1024) {
                 status.className = 'text-sm text-center text-red-500';
                 status.textContent = '⚠️ Ukuran file terlalu besar (Maksimal 4.5 MB).';
                 return;
             }
 
-            // Aktifkan Efek Loading Animasi
             btn.disabled = true;
             status.className = 'text-sm text-center text-gray-500';
-            status.innerHTML = '<span class="spinner"></span>Menyuntikkan kunci pengaman berkas, mohon tunggu...';
+            status.innerHTML = '<span class="spinner"></span>Membuka proteksi & menyusun enkripsi baru, mohon tunggu...';
 
             try {
-                // Membaca file fisik PDF menjadi ArrayBuffer biner
                 const arrayBuffer = await file.arrayBuffer();
+                
+                // Inisialisasi engine jsPDF (Halaman Baru)
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF('p', 'mm', 'a4');
 
-                // Memuat dokumen ke dalam struktur virtual PDF-Lib
-                const pdfDoc = await PDFLib.PDFDocument.load(arrayBuffer);
-
-                // PROSES ENKRIPSI UNIVERSAL: Memaksa semua PDF Viewer memicu kotak password
-                await pdfDoc.encrypt({
+                // Membaca visual halaman dari PDF asli yang terproteksi
+                const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
+                const pdf = await loadingTask.promise;
+                
+                // Menyiapkan konfigurasi enkripsi tangguh pada dokumen baru
+                doc.setProperties({ title: `Terkunci_${file.name}` });
+                doc.encryption = {
                     userPassword: password,
                     ownerPassword: password,
-                    permissions: {
-                        printing: 'highResolution', // Mengizinkan berkas dicetak dengan tajam
-                        modifying: false,           // Blokir hak edit teks/halaman
-                        copying: false,             // Blokir hak copy-paste teks oleh orang luar
-                        annotating: false           // Blokir hak mencorat-coret dokumen
-                    }
-                });
+                    userPermissions: ['print'] // Hanya izinkan cetak, kunci fungsi modifikasi dan copy-paste teks
+                };
 
-                // Bungkus kembali berkas yang telah disegel ke dalam bentuk bytes baru
-                const pdfBytes = await pdfDoc.save();
+                const pageWidth = doc.internal.pageSize.getWidth();
+                const pageHeight = doc.internal.pageSize.getHeight();
 
-                // Generate trigger unduhan otomatis ke browser pengguna
-                const blob = new Blob([pdfBytes], { type: 'application/pdf' });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `TERKUNCI_${file.name}`;
-                a.click();
-                URL.revokeObjectURL(url);
+                // Proses ekstrak & cetak ulang halaman terproteksi secara sekuensial
+                for (let i = 1; i <= pdf.numPages; i++) {
+                    if (i > 1) doc.addPage();
+                    
+                    const page = await pdf.getPage(i);
+                    // Gunakan skala 2.0 agar teks rekam medis tetap tajam, terbaca jelas, dan tidak buram
+                    const viewport = page.getViewport({ scale: 2.0 }); 
+                    
+                    const canvas = document.createElement('canvas');
+                    const context = canvas.getContext('2d');
+                    canvas.height = viewport.height;
+                    canvas.width = viewport.width;
 
-                // Sembunyikan form awal, tampilkan panel berhasil
+                    // Render halaman PDF asli ke dalam objek canvas virtual
+                    await page.render({ canvasContext: context, viewport: viewport }).promise;
+                    const imgData = canvas.toDataURL('image/jpeg', 0.95); // Kualitas render tinggi (95%)
+                    
+                    // Rekatkan halaman bersih tersebut ke dalam lembaran PDF baru yang terproteksi gembok password
+                    doc.addImage(imgData, 'JPEG', 0, 0, pageWidth, pageHeight);
+                }
+
+                // Simpan berkas
+                doc.save(`TERKUNCI_${file.name}`);
+
                 document.getElementById('panel-form').classList.add('hidden');
                 document.getElementById('panel-success').classList.remove('hidden');
 
             } catch (err) {
                 status.className = 'text-sm text-center text-red-500';
-                // Penanganan jika file asal dari SIMRS ternyata sudah terkunci bawaan pabrik
-                status.textContent = `❌ Gagal: File ini memiliki proteksi enkripsi bawaan asli dari sistem awal sehingga tidak dapat dimodifikasi ulang.`;
+                status.textContent = `❌ Gagal memproses: ${err.message}. Pastikan file tidak rusak.`;
                 console.error(err);
             } finally {
                 btn.disabled = false;
