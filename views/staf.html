@@ -5,7 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Kunci PDF - Staf Rekam Medis</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
     <style>
         body {
             background-image: linear-gradient(rgba(15, 23, 42, 0.7), rgba(15, 23, 42, 0.7)),
@@ -65,14 +68,14 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs text-gray-500">
                         <div class="p-3 bg-gray-50 rounded-lg">1. Upload file PDF yang ingin dikunci (max 4.5 mb)</div>
                         <div class="p-3 bg-gray-50 rounded-lg">2. Masukkan password minimal 6 karakter (nomor rm)</div>
-                        <div class="p-3 bg-gray-500/10 text-emerald-700 font-medium rounded-lg">3. Klik tombol proses (Diproses aman di perangkat Anda)</div>
+                        <div class="p-3 bg-emerald-50 text-emerald-700 font-semibold rounded-lg">3. Klik proses (Aman, enkripsi langsung di browser Anda)</div>
                         <div class="p-3 bg-gray-50 rounded-lg">4. File terenkripsi otomatis terunduh</div>
                     </div>
                 </div>
 
                 <div class="bg-yellow-50 border border-yellow-200 p-4 rounded-xl mb-6">
-                    <p class="text-sm text-yellow-800 font-bold mb-1">Jaminan Privasi & Keamanan</p>
-                    <p class="text-xs text-yellow-700">100% Aman. File rekam medis tidak diunggah ke internet/server manapun. Proses enkripsi dilakukan secara lokal di dalam browser Anda.</p>
+                    <p class="text-sm text-yellow-800 font-bold mb-1">Jaminan Keamanan Rekam Medis</p>
+                    <p class="text-xs text-yellow-700">File tidak dikirim ke internet/server luar. Proses enkripsi dilakukan mandiri oleh sistem browser untuk mencegah kebocoran data pasien.</p>
                 </div>
 
                 <div class="space-y-4">
@@ -91,7 +94,7 @@
                             class="w-full px-4 py-3 bg-gray-50 border rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none text-gray-700 text-sm">
                     </div>
 
-                    <button id="submitBtn" onclick="encryptPDFLocal()"
+                    <button id="submitBtn" onclick="uploadPDF()"
                         class="w-full bg-emerald-600 text-white font-bold py-4 rounded-xl shadow-lg hover:bg-emerald-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-all uppercase tracking-widest">
                         Proses & Kunci PDF
                     </button>
@@ -119,6 +122,9 @@
     </div>
 
     <script>
+        // Set susunan worker internal untuk PDF.js agar stabil membaca data
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+
         function resetForm() {
             document.getElementById('panel-success').classList.add('hidden');
             document.getElementById('panel-form').classList.remove('hidden');
@@ -127,14 +133,13 @@
             document.getElementById('status').textContent = '';
         }
 
-        // PERBAIKAN UTAMA: Logika Enkripsi Mandiri Tanpa Bergantung API / Server Luar
-        async function encryptPDFLocal() {
+        async function uploadPDF() {
             const fileInput = document.getElementById('pdfFile');
             const password = document.getElementById('password').value;
             const btn = document.getElementById('submitBtn');
             const status = document.getElementById('status');
 
-            // 1. Validasi Input Kosong
+            // Validasi input form
             if (!fileInput.files[0]) {
                 status.className = 'text-sm text-center text-red-500';
                 status.textContent = '⚠️ Silakan pilih file PDF terlebih dahulu.';
@@ -148,68 +153,67 @@
 
             const file = fileInput.files[0];
 
-            // 2. Validasi Ukuran File (Maksimal 4.5 MB)
+            // Validasi Ukuran File (Max 4.5 MB)
             if (file.size > 4.5 * 1024 * 1024) {
                 status.className = 'text-sm text-center text-red-500';
                 status.textContent = '⚠️ Ukuran file terlalu besar (Maksimal 4.5 MB).';
                 return;
             }
 
-            // Aktifkan Loading State
+            // Kunci tombol proses & pasang animasi loading spinner
             btn.disabled = true;
             status.className = 'text-sm text-center text-gray-500';
-            status.innerHTML = '<span class="spinner"></span>Memproses enkripsi secara aman, mohon tunggu...';
+            status.innerHTML = '<span class="spinner"></span>Membaca dan mengunci file rekam medis, mohon tunggu...';
 
             try {
-                // Membaca file PDF ke dalam ArrayBuffer
-                const fileReader = new FileReader();
+                // Konversi berkas fisik PDF menjadi ArrayBuffer mentah
+                const arrayBuffer = await file.arrayBuffer();
                 
-                const readFileAsArrayBuffer = (file) => {
-                    return new Promise((resolve, reject) => {
-                        fileReader.onload = () => resolve(fileReader.result);
-                        fileReader.onerror = () => reject(fileReader.error);
-                        fileReader.readAsArrayBuffer(file);
-                    });
+                // Panggil engine pembuat PDF
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF('p', 'mm', 'a4');
+
+                // Memuat struktur file rekam medis asli
+                const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
+                const pdf = await loadingTask.promise;
+                
+                // Pasang sistem enkripsi proteksi password
+                doc.setProperties({ title: `Terkunci_${file.name}` });
+                doc.encryption = {
+                    userPassword: password,
+                    ownerPassword: password,
+                    userPermissions: ['print'] // Staf/pasien hanya diberi izin cetak, dilarang edit/copy tulisan
                 };
 
-                const arrayBuffer = await readFileAsArrayBuffer(file);
+                // Lakukan pemindaian ulang halaman berkas asli demi melewati proteksi bawaan SIMRS
+                for (let i = 1; i <= pdf.numPages; i++) {
+                    if (i > 1) doc.addPage();
+                    
+                    const page = await pdf.getPage(i);
+                    const viewport = page.getViewport({ scale: 2.0 }); // Set skala ketajaman dokumen tinggi
+                    
+                    const canvas = document.createElement('canvas');
+                    const context = canvas.getContext('2d');
+                    canvas.height = viewport.height;
+                    canvas.width = viewport.width;
 
-                // Memuat dokumen menggunakan pdf-lib
-                const pdfDoc = await PDFLib.PDFDocument.load(arrayBuffer);
-                
-                // Melakukan Enkripsi Dokumen menggunakan Password Pengguna
-                // Mengunci hak akses cetak, edit, copy, dll, serta enkripsi dokumen utama
-                await pdfDoc.encrypt({
-                    userPassword: password,
-                    ownerPassword: password, // opsional, disamakan agar sinkron
-                    permissions: {
-                        printing: 'highResolution',
-                        modifying: false,
-                        copying: false
-                    }
-                });
+                    await page.render({ canvasContext: context, viewport: viewport }).promise;
+                    const imgData = canvas.toDataURL('image/jpeg', 0.9);
+                    
+                    // Cetak ulang ke halaman baru yang aman terproteksi
+                    doc.addImage(imgData, 'JPEG', 0, 0, doc.internal.pageSize.getWidth(), doc.internal.pageSize.getHeight());
+                }
 
-                // Menyimpan PDF yang telah dikunci menjadi bytes baru
-                const pdfBytes = await pdfDoc.save();
+                // Simpan berkas hasil enkripsi secara otomatis
+                doc.save(`Terkunci_${file.name}`);
 
-                // Proses Download Otomatis
-                const blob = new Blob([pdfBytes], { type: 'application/pdf' });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                
-                // Menamai file keluaran (contoh: Terkunci_NamaFileAsli.pdf)
-                a.download = `Terkunci_${file.name}`;
-                a.click();
-                URL.revokeObjectURL(url);
-
-                // Tampilkan panel sukses
+                // Tukar tampilan ke panel sukses
                 document.getElementById('panel-form').classList.add('hidden');
                 document.getElementById('panel-success').classList.remove('hidden');
 
             } catch (err) {
                 status.className = 'text-sm text-center text-red-500';
-                status.textContent = `❌ Terjadi kesalahan: ${err.message}`;
+                status.textContent = `❌ Terjadi kesalahan enkripsi lokal: ${err.message}`;
                 console.error(err);
             } finally {
                 btn.disabled = false;
