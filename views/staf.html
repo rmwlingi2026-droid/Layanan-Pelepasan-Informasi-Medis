@@ -1,224 +1,150 @@
-<!DOCTYPE html>
-<html lang="id">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kunci PDF - Staf Rekam Medis</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+const express = require('express');
+const multer = require('multer');
+const path = require('node:path');
+const pdfImgConvert = require('pdf-img-convert'); // Tambahan untuk bypass proteksi SIMRS
+const { jsPDF } = require('jspdf'); // Tambahan untuk menyusun ulang dokumen bersih
+require('dotenv').config();
+ 
+const app = express();
+ 
+const PUBLIC_KEY = process.env.PUBLIC_KEY_IPDF;
+const SECRET_KEY = process.env.API_KEY_IPDF;
+ 
+const upload = multer({
+    storage: multer.memoryStorage(),
+    limits: { fileSize: 30 * 1024 * 1024 } // 30MB
+});
+ 
+app.use(express.urlencoded({ extended: true }));
+ 
+// ================== HALAMAN UTAMA ==================
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, '..', 'views', 'home.html'));
+});
+ 
+app.get('/staf', (req, res) => {
+    res.sendFile(path.join(__dirname, '..', 'views', 'staf.html'));
+});
+ 
+// ================== ENCRYPT PDF ==================
+app.post('/encrypt-pdf', upload.single('pdfFile'), async (req, res) => {
+    if (!req.file) {
+        return res.status(400).send('Silakan upload file PDF');
+    }
+ 
+    const password = req.body.password;
+    if (!password || password.length < 6) {
+        return res.status(400).send('Password minimal 6 karakter');
+    }
+ 
+    try {
+        let fileBuffer = req.file.buffer;
+        const fileName = req.file.originalname || 'document.pdf';
 
-    <style>
-        body {
-            background-image: linear-gradient(rgba(15, 23, 42, 0.7), rgba(15, 23, 42, 0.7)),
-                              url('https://ik.imagekit.io/wn3l3cikt/bg.png');
-            background-size: cover;
-            background-position: center;
-            background-attachment: fixed;
-            background-repeat: no-repeat;
-        }
+        // =========================================================================
+        // PROSES STRIPPING & BYPASS PROTEKSI SIMRS (RE-RENDER DI SERVER)
+        // =========================================================================
+        try {
+            // Konversi setiap halaman PDF asli menjadi tumpukan gambar resolusi tinggi (skala 2.0 / 150 DPI)
+            const pdfImages = await pdfImgConvert.convert(fileBuffer, { width: 1200 });
+            
+            const doc = new jsPDF('p', 'mm', 'a4');
+            const pageWidth = doc.internal.pageSize.getWidth();
+            const pageHeight = doc.internal.pageSize.getHeight();
 
-        .spinner {
-            display: inline-block;
-            width: 16px;
-            height: 16px;
-            border: 2px solid rgba(255,255,255,0.4);
-            border-top-color: white;
-            border-radius: 50%;
-            animation: spin 0.7s linear infinite;
-            vertical-align: middle;
-            margin-right: 6px;
-        }
-        @keyframes spin { to { transform: rotate(360deg); } }
-
-        input[type="file"]::file-selector-button {
-            margin-right: 12px;
-            padding: 6px 14px;
-            border-radius: 9999px;
-            border: 0;
-            font-size: 12px;
-            font-weight: 600;
-            background: #d1fae5;
-            color: #065f46;
-            cursor: pointer;
-        }
-        input[type="file"]::file-selector-button:hover {
-            background: #a7f3d0;
-        }
-    </style>
-</head>
-<body class="min-h-screen py-10 px-4">
-
-    <div class="max-w-2xl mx-auto bg-white shadow-2xl rounded-2xl overflow-hidden">
-
-        <div class="bg-emerald-600 p-6 text-white text-center">
-            <h1 class="text-2xl font-bold">🔒 Kunci File PDF</h1>
-            <p class="text-emerald-100 text-sm mt-1">Portal Staf — Rekam Medis Rumah Sakit</p>
-        </div>
-
-        <div class="p-8">
-
-            <div id="panel-form">
-                <div class="mb-6">
-                    <h2 class="text-lg font-bold text-gray-800 flex items-center mb-4">
-                        <span class="bg-emerald-100 text-emerald-600 rounded-full h-8 w-8 flex items-center justify-center mr-2 text-sm">A</span>
-                        INFORMASI PENGGUNAAN
-                    </h2>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs text-gray-500">
-                        <div class="p-3 bg-gray-50 rounded-lg">1. Upload file PDF yang ingin dikunci (max 4.5 mb)</div>
-                        <div class="p-3 bg-gray-50 rounded-lg">2. Masukkan password minimal 6 karakter (nomor rm)</div>
-                        <div class="p-3 bg-emerald-50 text-emerald-700 font-semibold rounded-lg">3. Klik proses (Mendukung PDF terproteksi SIMRS)</div>
-                        <div class="p-3 bg-gray-50 rounded-lg">4. File terenkripsi otomatis terunduh</div>
-                    </div>
-                </div>
-
-                <div class="bg-yellow-50 border border-yellow-200 p-4 rounded-xl mb-6">
-                    <p class="text-sm text-yellow-800 font-bold mb-1">Jaminan Keamanan Rekam Medis</p>
-                    <p class="text-xs text-yellow-700">Proses bypass proteksi dan enkripsi ulang dilakukan 100% lokal di browser Anda tanpa internet. Data medis pasien dijamin rahasia.</p>
-                </div>
-
-                <div class="space-y-4">
-                    <div>
-                        <label class="block text-xs font-bold text-gray-500 uppercase mb-2">File PDF</label>
-                        <div class="bg-gray-50 border border-dashed border-gray-300 rounded-xl p-3">
-                            <input type="file" id="pdfFile" accept="application/pdf"
-                                class="w-full text-sm text-gray-500 cursor-pointer">
-                        </div>
-                    </div>
-
-                    <div>
-                        <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Password PDF</label>
-                        <input type="password" id="password"
-                            placeholder="Masukkan password (min. 6 karakter)"
-                            class="w-full px-4 py-3 bg-gray-50 border rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none text-gray-700 text-sm">
-                    </div>
-
-                    <button id="submitBtn" onclick="uploadPDF()"
-                        class="w-full bg-emerald-600 text-white font-bold py-4 rounded-xl shadow-lg hover:bg-emerald-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-all uppercase tracking-widest">
-                        Proses & Kunci PDF
-                    </button>
-
-                    <div id="status" class="min-h-[20px] text-sm text-center"></div>
-                </div>
-            </div>
-
-            <div id="panel-success" class="hidden text-center py-10 space-y-4">
-                <div class="bg-emerald-100 w-24 h-24 rounded-full flex items-center justify-center mx-auto shadow-inner">
-                    <svg class="w-12 h-12 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path>
-                    </svg>
-                </div>
-                <h2 class="text-2xl font-bold text-gray-800">PDF Berhasil Dikunci!</h2>
-                <p class="text-gray-600 text-sm max-w-sm mx-auto leading-relaxed">
-                    Sistem berhasil membuat ulang lembar rekam medis dan menguncinya dengan password baru. File sudah otomatis terunduh.
-                </p>
-                <button onclick="resetForm()" class="mt-6 text-emerald-600 font-bold hover:underline">
-                    Kunci File Lain
-                </button>
-            </div>
-
-        </div>
-    </div>
-
-    <script>
-        // Set worker PDF.js secara global dari CDN eksternal terpercaya
-        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
-
-        function resetForm() {
-            document.getElementById('panel-success').classList.add('hidden');
-            document.getElementById('panel-form').classList.remove('hidden');
-            document.getElementById('pdfFile').value = '';
-            document.getElementById('password').value = '';
-            document.getElementById('status').textContent = '';
-        }
-
-        async function uploadPDF() {
-            const fileInput = document.getElementById('pdfFile');
-            const password = document.getElementById('password').value;
-            const btn = document.getElementById('submitBtn');
-            const status = document.getElementById('status');
-
-            if (!fileInput.files[0]) {
-                status.className = 'text-sm text-center text-red-500';
-                status.textContent = '⚠️ Silakan pilih file PDF terlebih dahulu.';
-                return;
-            }
-            if (password.length < 6) {
-                status.className = 'text-sm text-center text-red-500';
-                status.textContent = '⚠️ Password minimal 6 karakter.';
-                return;
-            }
-
-            const file = fileInput.files[0];
-
-            if (file.size > 4.5 * 1024 * 1024) {
-                status.className = 'text-sm text-center text-red-500';
-                status.textContent = '⚠️ Ukuran file terlalu besar (Maksimal 4.5 MB).';
-                return;
-            }
-
-            btn.disabled = true;
-            status.className = 'text-sm text-center text-gray-500';
-            status.innerHTML = '<span class="spinner"></span>Membuka proteksi & menyusun enkripsi baru, mohon tunggu...';
-
-            try {
-                const arrayBuffer = await file.arrayBuffer();
+            for (let i = 0; i < pdfImages.length; i++) {
+                if (i > 0) doc.addPage();
                 
-                // Inisialisasi engine jsPDF (Halaman Baru)
-                const { jsPDF } = window.jspdf;
-                const doc = new jsPDF('p', 'mm', 'a4');
-
-                // Membaca visual halaman dari PDF asli yang terproteksi
-                const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
-                const pdf = await loadingTask.promise;
-                
-                // Menyiapkan konfigurasi enkripsi tangguh pada dokumen baru
-                doc.setProperties({ title: `Terkunci_${file.name}` });
-                doc.encryption = {
-                    userPassword: password,
-                    ownerPassword: password,
-                    userPermissions: ['print'] // Hanya izinkan cetak, kunci fungsi modifikasi dan copy-paste teks
-                };
-
-                const pageWidth = doc.internal.pageSize.getWidth();
-                const pageHeight = doc.internal.pageSize.getHeight();
-
-                // Proses ekstrak & cetak ulang halaman terproteksi secara sekuensial
-                for (let i = 1; i <= pdf.numPages; i++) {
-                    if (i > 1) doc.addPage();
-                    
-                    const page = await pdf.getPage(i);
-                    // Gunakan skala 2.0 agar teks rekam medis tetap tajam, terbaca jelas, dan tidak buram
-                    const viewport = page.getViewport({ scale: 2.0 }); 
-                    
-                    const canvas = document.createElement('canvas');
-                    const context = canvas.getContext('2d');
-                    canvas.height = viewport.height;
-                    canvas.width = viewport.width;
-
-                    // Render halaman PDF asli ke dalam objek canvas virtual
-                    await page.render({ canvasContext: context, viewport: viewport }).promise;
-                    const imgData = canvas.toDataURL('image/jpeg', 0.95); // Kualitas render tinggi (95%)
-                    
-                    // Rekatkan halaman bersih tersebut ke dalam lembaran PDF baru yang terproteksi gembok password
-                    doc.addImage(imgData, 'JPEG', 0, 0, pageWidth, pageHeight);
-                }
-
-                // Simpan berkas
-                doc.save(`TERKUNCI_${file.name}`);
-
-                document.getElementById('panel-form').classList.add('hidden');
-                document.getElementById('panel-success').classList.remove('hidden');
-
-            } catch (err) {
-                status.className = 'text-sm text-center text-red-500';
-                status.textContent = `❌ Gagal memproses: ${err.message}. Pastikan file tidak rusak.`;
-                console.error(err);
-            } finally {
-                btn.disabled = false;
+                // Masukkan base64 gambar halaman rekam medis ke dokumen baru yang bersih
+                const base64Image = Buffer.from(pdfImages[i]).toString('base64');
+                doc.addImage(`data:image/jpeg;base64,${base64Image}`, 'JPEG', 0, 0, pageWidth, pageHeight);
             }
+
+            // Kembalikan dokumen baru yang sudah "bersih dari proteksi lama" ke bentuk Buffer
+            const cleanPdfArrayBuffer = doc.output('arraybuffer');
+            fileBuffer = Buffer.from(cleanPdfArrayBuffer);
+        } catch (stripError) {
+            console.warn('[Bypass Proteksi SIMRS Info]: Memproses dengan metode standar...', stripError.message);
+            // Jika file tidak memiliki enkripsi bawaan, alur akan otomatis memakai fileBuffer asli
         }
-    </script>
-</body>
-</html>
+        // =========================================================================
+ 
+        // Step 0: Autentikasi → dapat JWT token
+        const authRes = await fetch('https://api.ilovepdf.com/v1/auth', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ public_key: PUBLIC_KEY })
+        });
+        if (!authRes.ok) throw new Error(`Auth gagal: ${authRes.status}`);
+        const { token } = await authRes.json();
+ 
+        // Step 1: Buat Task
+        const startRes = await fetch('https://api.ilovepdf.com/v1/start/protect', {
+            method: 'GET',
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (!startRes.ok) throw new Error(`Gagal start task: ${startRes.status}`);
+        const { task: taskId, server: serverHost } = await startRes.json();
+        if (!taskId) throw new Error('Task ID tidak ditemukan');
+ 
+        // Step 2: Upload file
+        const formData = new FormData();
+        const blob = new Blob([fileBuffer], { type: 'application/pdf' });
+        formData.append('task', taskId);
+        formData.append('file', blob, fileName);
+ 
+        const uploadRes = await fetch(`https://${serverHost}/v1/upload`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${token}` },
+            body: formData
+        });
+        if (!uploadRes.ok) throw new Error(`Gagal upload: ${uploadRes.status}`);
+        const { server_filename: serverFilename } = await uploadRes.json();
+        if (!serverFilename) throw new Error('server_filename tidak ditemukan');
+ 
+        // Step 3: Proses (protect/encrypt)
+        const processRes = await fetch(`https://${serverHost}/v1/process`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                task: taskId,
+                tool: 'protect',
+                files: [{ server_filename: serverFilename, filename: fileName }],
+                password: password
+            })
+        });
+        if (!processRes.ok) {
+            const errText = await processRes.text();
+            throw new Error(`Gagal proses: ${processRes.status} - ${errText}`);
+        }
+ 
+        // Step 4: Download hasil
+        const downloadRes = await fetch(`https://${serverHost}/v1/download/${taskId}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (!downloadRes.ok) throw new Error(`Gagal download: ${downloadRes.status}`);
+ 
+        // ✅ Gunakan arrayBuffer(), bukan .buffer() (tidak ada di native fetch)
+        const outputBuffer = Buffer.from(await downloadRes.arrayBuffer());
+ 
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename="TERKUNCI_${fileName}"`);
+        res.send(outputBuffer);
+ 
+    } catch (error) {
+        console.error('[encrypt-pdf error]', error);
+        res.status(500).send(`Terjadi kesalahan: ${error.message}`);
+    }
+});
+ 
+if (process.env.NODE_ENV !== 'production') {
+    const PORT = process.env.PORT || 3000;
+    app.listen(PORT, () => {
+        console.log(`✅ Server berjalan di http://localhost:${PORT}`);
+    });
+}
+ 
+module.exports = app;
