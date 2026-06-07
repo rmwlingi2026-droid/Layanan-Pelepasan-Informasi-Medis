@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Kunci PDF - Staf Rekam Medis</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
     <style>
         body {
             background-image: linear-gradient(rgba(15, 23, 42, 0.7), rgba(15, 23, 42, 0.7)),
@@ -64,14 +65,14 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs text-gray-500">
                         <div class="p-3 bg-gray-50 rounded-lg">1. Upload file PDF yang ingin dikunci (max 4.5 mb)</div>
                         <div class="p-3 bg-gray-50 rounded-lg">2. Masukkan password minimal 6 karakter (nomor rm)</div>
-                        <div class="p-3 bg-gray-50 rounded-lg">3. Klik tombol proses dan tunggu sebentar</div>
+                        <div class="p-3 bg-gray-500/10 text-emerald-700 font-medium rounded-lg">3. Klik tombol proses (Diproses aman di perangkat Anda)</div>
                         <div class="p-3 bg-gray-50 rounded-lg">4. File terenkripsi otomatis terunduh</div>
                     </div>
                 </div>
 
                 <div class="bg-yellow-50 border border-yellow-200 p-4 rounded-xl mb-6">
-                    <p class="text-sm text-yellow-800 font-bold mb-1">Catatan</p>
-                    <p class="text-xs text-yellow-700">File tidak disimpan di server. Proses dilakukan secara langsung melalui iLovePDF API dan file dihapus otomatis setelah selesai</p>
+                    <p class="text-sm text-yellow-800 font-bold mb-1">Jaminan Privasi & Keamanan</p>
+                    <p class="text-xs text-yellow-700">100% Aman. File rekam medis tidak diunggah ke internet/server manapun. Proses enkripsi dilakukan secara lokal di dalam browser Anda.</p>
                 </div>
 
                 <div class="space-y-4">
@@ -90,7 +91,7 @@
                             class="w-full px-4 py-3 bg-gray-50 border rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none text-gray-700 text-sm">
                     </div>
 
-                    <button id="submitBtn" onclick="uploadPDF()"
+                    <button id="submitBtn" onclick="encryptPDFLocal()"
                         class="w-full bg-emerald-600 text-white font-bold py-4 rounded-xl shadow-lg hover:bg-emerald-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-all uppercase tracking-widest">
                         Proses & Kunci PDF
                     </button>
@@ -126,12 +127,14 @@
             document.getElementById('status').textContent = '';
         }
 
-        async function uploadPDF() {
+        // PERBAIKAN UTAMA: Logika Enkripsi Mandiri Tanpa Bergantung API / Server Luar
+        async function encryptPDFLocal() {
             const fileInput = document.getElementById('pdfFile');
             const password = document.getElementById('password').value;
             const btn = document.getElementById('submitBtn');
             const status = document.getElementById('status');
 
+            // 1. Validasi Input Kosong
             if (!fileInput.files[0]) {
                 status.className = 'text-sm text-center text-red-500';
                 status.textContent = '⚠️ Silakan pilih file PDF terlebih dahulu.';
@@ -143,39 +146,71 @@
                 return;
             }
 
+            const file = fileInput.files[0];
+
+            // 2. Validasi Ukuran File (Maksimal 4.5 MB)
+            if (file.size > 4.5 * 1024 * 1024) {
+                status.className = 'text-sm text-center text-red-500';
+                status.textContent = '⚠️ Ukuran file terlalu besar (Maksimal 4.5 MB).';
+                return;
+            }
+
+            // Aktifkan Loading State
             btn.disabled = true;
             status.className = 'text-sm text-center text-gray-500';
-            status.innerHTML = '<span class="spinner"></span>Memproses, mohon tunggu...';
-
-            const formData = new FormData();
-            formData.append('pdfFile', fileInput.files[0]);
-            formData.append('password', password);
+            status.innerHTML = '<span class="spinner"></span>Memproses enkripsi secara aman, mohon tunggu...';
 
             try {
-                const res = await fetch('/encrypt-pdf', {
-                    method: 'POST',
-                    body: formData,
+                // Membaca file PDF ke dalam ArrayBuffer
+                const fileReader = new FileReader();
+                
+                const readFileAsArrayBuffer = (file) => {
+                    return new Promise((resolve, reject) => {
+                        fileReader.onload = () => resolve(fileReader.result);
+                        fileReader.onerror = () => reject(fileReader.error);
+                        fileReader.readAsArrayBuffer(file);
+                    });
+                };
+
+                const arrayBuffer = await readFileAsArrayBuffer(file);
+
+                // Memuat dokumen menggunakan pdf-lib
+                const pdfDoc = await PDFLib.PDFDocument.load(arrayBuffer);
+                
+                // Melakukan Enkripsi Dokumen menggunakan Password Pengguna
+                // Mengunci hak akses cetak, edit, copy, dll, serta enkripsi dokumen utama
+                await pdfDoc.encrypt({
+                    userPassword: password,
+                    ownerPassword: password, // opsional, disamakan agar sinkron
+                    permissions: {
+                        printing: 'highResolution',
+                        modifying: false,
+                        copying: false
+                    }
                 });
 
-                if (!res.ok) {
-                    const msg = await res.text();
-                    throw new Error(msg || `Error ${res.status}`);
-                }
+                // Menyimpan PDF yang telah dikunci menjadi bytes baru
+                const pdfBytes = await pdfDoc.save();
 
-                const blob = await res.blob();
+                // Proses Download Otomatis
+                const blob = new Blob([pdfBytes], { type: 'application/pdf' });
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = url;
-                a.download = 'PDF_Terkunci.pdf';
+                
+                // Menamai file keluaran (contoh: Terkunci_NamaFileAsli.pdf)
+                a.download = `Terkunci_${file.name}`;
                 a.click();
                 URL.revokeObjectURL(url);
 
+                // Tampilkan panel sukses
                 document.getElementById('panel-form').classList.add('hidden');
                 document.getElementById('panel-success').classList.remove('hidden');
 
             } catch (err) {
                 status.className = 'text-sm text-center text-red-500';
-                status.textContent = `❌ ${err.message}`;
+                status.textContent = `❌ Terjadi kesalahan: ${err.message}`;
+                console.error(err);
             } finally {
                 btn.disabled = false;
             }
