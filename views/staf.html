@@ -68,7 +68,7 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs text-gray-500">
                         <div class="p-3 bg-gray-50 rounded-lg">1. Upload file PDF yang ingin dikunci (max 4.5 mb)</div>
                         <div class="p-3 bg-gray-50 rounded-lg">2. Masukkan password minimal 6 karakter (nomor rm)</div>
-                        <div class="p-3 bg-gray-50 rounded-lg">3. Klik proses (Mendukung PDF terproteksi SIMRS)</div>
+                        <div class="p-3 bg-gray-50 rounded-lg">3. Klik proses dan kunci PDF</div>
                         <div class="p-3 bg-gray-50 rounded-lg">4. File terenkripsi otomatis terunduh</div>
                     </div>
                 </div>
@@ -134,91 +134,73 @@
         }
 
         async function uploadPDF() {
-            const fileInput = document.getElementById('pdfFile');
-            const password = document.getElementById('password').value;
-            const btn = document.getElementById('submitBtn');
-            const status = document.getElementById('status');
+    const fileInput = document.getElementById('pdfFile');
+    const password = document.getElementById('password').value;
+    const btn = document.getElementById('submitBtn');
+    const status = document.getElementById('status');
 
-            if (!fileInput.files[0]) {
-                status.className = 'text-sm text-center text-red-500';
-                status.textContent = '⚠️ Silakan pilih file PDF terlebih dahulu.';
-                return;
-            }
-            if (password.length < 6) {
-                status.className = 'text-sm text-center text-red-500';
-                status.textContent = '⚠️ Password minimal 6 karakter.';
-                return;
-            }
+    if (!fileInput.files[0]) {
+        status.className = 'text-sm text-center text-red-500';
+        status.textContent = '⚠️ Silakan pilih file PDF terlebih dahulu.';
+        return;
+    }
 
-            const file = fileInput.files[0];
+    if (password.length < 6) {
+        status.className = 'text-sm text-center text-red-500';
+        status.textContent = '⚠️ Password minimal 6 karakter.';
+        return;
+    }
 
-            if (file.size > 4.5 * 1024 * 1024) {
-                status.className = 'text-sm text-center text-red-500';
-                status.textContent = '⚠️ Ukuran file terlalu besar (Maksimal 4.5 MB).';
-                return;
-            }
+    const file = fileInput.files[0];
 
-            btn.disabled = true;
-            status.className = 'text-sm text-center text-gray-500';
-            status.innerHTML = '<span class="spinner"></span>Membuka proteksi & menyusun enkripsi baru, mohon tunggu...';
+    if (file.size > 4.5 * 1024 * 1024) {
+        status.className = 'text-sm text-center text-red-500';
+        status.textContent = '⚠️ Ukuran file terlalu besar (Maksimal 4.5 MB).';
+        return;
+    }
 
-            try {
-                const arrayBuffer = await file.arrayBuffer();
-                
-                // Inisialisasi engine jsPDF (Halaman Baru)
-                const { jsPDF } = window.jspdf;
-                const doc = new jsPDF('p', 'mm', 'a4');
+    btn.disabled = true;
+    status.className = 'text-sm text-center text-gray-500';
+    status.innerHTML = '<span class="spinner"></span>Memproses dan mengunci PDF...';
 
-                // Membaca visual halaman dari PDF asli yang terproteksi
-                const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
-                const pdf = await loadingTask.promise;
-                
-                // Menyiapkan konfigurasi enkripsi tangguh pada dokumen baru
-                doc.setProperties({ title: `Terkunci_${file.name}` });
-                doc.encryption = {
-                    userPassword: password,
-                    ownerPassword: password,
-                    userPermissions: ['print'] // Hanya izinkan cetak, kunci fungsi modifikasi dan copy-paste teks
-                };
+    try {
+        const formData = new FormData();
+        formData.append('pdfFile', file);
+        formData.append('password', password);
 
-                const pageWidth = doc.internal.pageSize.getWidth();
-                const pageHeight = doc.internal.pageSize.getHeight();
+        const response = await fetch('/encrypt-pdf', {
+            method: 'POST',
+            body: formData
+        });
 
-                // Proses ekstrak & cetak ulang halaman terproteksi secara sekuensial
-                for (let i = 1; i <= pdf.numPages; i++) {
-                    if (i > 1) doc.addPage();
-                    
-                    const page = await pdf.getPage(i);
-                    // Gunakan skala 2.0 agar teks rekam medis tetap tajam, terbaca jelas, dan tidak buram
-                    const viewport = page.getViewport({ scale: 2.0 }); 
-                    
-                    const canvas = document.createElement('canvas');
-                    const context = canvas.getContext('2d');
-                    canvas.height = viewport.height;
-                    canvas.width = viewport.width;
-
-                    // Render halaman PDF asli ke dalam objek canvas virtual
-                    await page.render({ canvasContext: context, viewport: viewport }).promise;
-                    const imgData = canvas.toDataURL('image/jpeg', 0.95); // Kualitas render tinggi (95%)
-                    
-                    // Rekatkan halaman bersih tersebut ke dalam lembaran PDF baru yang terproteksi gembok password
-                    doc.addImage(imgData, 'JPEG', 0, 0, pageWidth, pageHeight);
-                }
-
-                // Simpan berkas
-                doc.save(`TERKUNCI_${file.name}`);
-
-                document.getElementById('panel-form').classList.add('hidden');
-                document.getElementById('panel-success').classList.remove('hidden');
-
-            } catch (err) {
-                status.className = 'text-sm text-center text-red-500';
-                status.textContent = `❌ Gagal memproses: ${err.message}. Pastikan file tidak rusak.`;
-                console.error(err);
-            } finally {
-                btn.disabled = false;
-            }
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(errorText);
         }
+
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `TERKUNCI_${file.name}`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+
+        window.URL.revokeObjectURL(url);
+
+        document.getElementById('panel-form').classList.add('hidden');
+        document.getElementById('panel-success').classList.remove('hidden');
+
+    } catch (err) {
+        status.className = 'text-sm text-center text-red-500';
+        status.textContent = `❌ Gagal memproses: ${err.message}`;
+        console.error(err);
+    } finally {
+        btn.disabled = false;
+    }
+}
     </script>
 </body>
 </html>
