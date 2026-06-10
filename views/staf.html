@@ -112,7 +112,7 @@
                 </div>
                 <h2 class="text-2xl font-bold text-gray-800">PDF Berhasil Dikunci!</h2>
                 <p class="text-gray-600 text-sm max-w-sm mx-auto leading-relaxed">
-                    Sistem berhasil membuat ulang lembar rekam medis dan menguncinya dengan password baru. File sudah otomatis terunduh.
+                    Sistem berhasil membuat ulang lembar rekam medis dan menguncinya dengan password baru. File sudah otomatis terunduh dan wajib dibuka menggunakan password.
                 </p>
                 <button onclick="resetForm()" class="mt-6 text-emerald-600 font-bold hover:underline">
                     Kunci File Lain
@@ -123,7 +123,6 @@
     </div>
 
     <script>
-        // Set worker PDF.js secara global dari CDN eksternal terpercaya
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
 
         function resetForm() {
@@ -133,74 +132,85 @@
             document.getElementById('password').value = '';
             document.getElementById('status').textContent = '';
         }
-async function uploadPDF() {
-    const fileInput = document.getElementById('pdfFile');
-    const password = document.getElementById('password').value;
-    const btn = document.getElementById('submitBtn');
-    const status = document.getElementById('status');
 
-    if (!fileInput.files[0]) {
-        status.className = 'text-sm text-center text-red-500';
-        status.textContent = '⚠️ Silakan pilih file PDF terlebih dahulu.';
-        return;
-    }
+        async function uploadPDF() {
+            const fileInput = document.getElementById('pdfFile');
+            const password = document.getElementById('password').value;
+            const btn = document.getElementById('submitBtn');
+            const status = document.getElementById('status');
 
-    if (password.length < 6) {
-        status.className = 'text-sm text-center text-red-500';
-        status.textContent = '⚠️ Password minimal 6 karakter.';
-        return;
-    }
+            if (!fileInput.files[0]) {
+                status.className = 'text-sm text-center text-red-500';
+                status.textContent = '⚠️ Silakan pilih file PDF terlebih dahulu.';
+                return;
+            }
 
-    const file = fileInput.files[0];
+            if (password.length < 6) {
+                status.className = 'text-sm text-center text-red-500';
+                status.textContent = '⚠️ Password minimal 6 karakter.';
+                return;
+            }
 
-    if (file.size > 4.5 * 1024 * 1024) {
-        status.className = 'text-sm text-center text-red-500';
-        status.textContent = '⚠️ Ukuran file terlalu besar (Maksimal 4.5 MB).';
-        return;
-    }
+            const file = fileInput.files[0];
 
-    btn.disabled = true;
-    status.className = 'text-sm text-center text-gray-500';
-    status.innerHTML = '<span class="spinner"></span>Memproses dan mengunci PDF...';
+            if (file.size > 4.5 * 1024 * 1024) {
+                status.className = 'text-sm text-center text-red-500';
+                status.textContent = '⚠️ Ukuran file terlalu besar (Maksimal 4.5 MB).';
+                return;
+            }
 
-    try {
-        const formData = new FormData();
-        formData.append('pdfFile', file);
-        formData.append('password', password);
+            btn.disabled = true;
+            status.className = 'text-sm text-center text-gray-500';
+            status.innerHTML = '<span class="spinner"></span>Memproses dan mengunci PDF secara lokal...';
 
-        const response = await fetch('/encrypt-pdf', {
-            method: 'POST',
-            body: formData
-        });
+            try {
+                // 1. Ambil data file PDF ke dalam bentuk ArrayBuffer
+                const fileReader = new FileReader();
+                const fileData = await new Promise((resolve, reject) => {
+                    fileReader.onload = () => resolve(fileReader.result);
+                    fileReader.onerror = () => reject(fileReader.error);
+                    fileReader.readAsArrayBuffer(file);
+                });
 
-        if (!response.ok) {
-            const errorText = await response.text();
-            throw new Error(errorText);
+                // 2. Load dokumen menggunakan PDFLib dengan bypass proteksi enkripsi lama (SIMRS)
+                const pdfDoc = await PDFLib.PDFDocument.load(fileData, { ignoreEncryption: true });
+
+                // 3. ENKRIPSI ABSOLUT: Terapkan userPassword agar PDF terkunci saat dibuka pasien
+                const pdfBytes = await pdfDoc.save({
+                    userPassword: password, // Password untuk membuka dokumen (WAJIB)
+                    ownerPassword: password, // Password hak akses edit dokumen
+                    permissions: {
+                        printing: 'highResolution',
+                        modifying: false,
+                        copying: false
+                    }
+                });
+
+                // 4. Unduh file PDF hasil enkripsi lokal
+                const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+                const url = window.URL.createObjectURL(blob);
+
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `TERKUNCI_${file.name}`;
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+
+                window.URL.revokeObjectURL(url);
+
+                // Tampilkan panel sukses
+                document.getElementById('panel-form').classList.add('hidden');
+                document.getElementById('panel-success').classList.remove('hidden');
+
+            } catch (err) {
+                status.className = 'text-sm text-center text-red-500';
+                status.textContent = `❌ Gagal memproses lokal: ${err.message}`;
+                console.error(err);
+            } finally {
+                btn.disabled = false;
+            }
         }
-
-        const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
-
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `TERKUNCI_${file.name}`;
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-
-        window.URL.revokeObjectURL(url);
-
-        document.getElementById('panel-form').classList.add('hidden');
-        document.getElementById('panel-success').classList.remove('hidden');
-
-    } catch (err) {
-        status.className = 'text-sm text-center text-red-500';
-        status.textContent = `❌ Gagal memproses: ${err.message}`;
-        console.error(err);
-    } finally {
-        btn.disabled = false;
-    }
-}
     </script>
 </body>
 </html>
