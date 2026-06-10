@@ -74,7 +74,7 @@
 
                 <div class="bg-yellow-50 border border-yellow-200 p-4 rounded-xl mb-6">
                     <p class="text-sm text-yellow-800 font-bold mb-1">Jaminan Keamanan Rekam Medis</p>
-                    <p class="text-xs text-yellow-700">Proses proteksi dan enkripsi ulang dilakukan melalui jaringan aman server internal hospital. Data medis pasien dijamin rahasia.</p>
+                    <p class="text-xs text-yellow-700">Proses bypass proteksi dan enkripsi ulang dilakukan 100% lokal di browser Anda tanpa internet. Data medis pasien dijamin rahasia.</p>
                 </div>
 
                 <div class="space-y-4">
@@ -110,7 +110,7 @@
                 </div>
                 <h2 class="text-2xl font-bold text-gray-800">PDF Berhasil Dikunci!</h2>
                 <p class="text-gray-600 text-sm max-w-sm mx-auto leading-relaxed">
-                    Sistem berhasil membuat ulang lembar rekam medis dan menguncinya dengan password baru. File sudah otomatis terunduh.
+                    Sistem berhasil memproses lembar rekam medis dan menguncinya dengan password baru secara lokal. File sudah otomatis terunduh.
                 </p>
                 <button onclick="resetForm()" class="mt-6 text-emerald-600 font-bold hover:underline">
                     Kunci File Lain
@@ -157,24 +157,33 @@
 
             btn.disabled = true;
             status.className = 'text-sm text-center text-gray-500';
-            status.innerHTML = '<span class="spinner"></span>Memproses dan mengunci PDF...';
+            status.innerHTML = '<span class="spinner"></span>Memproses enkripsi aman langsung di browser...';
 
             try {
-                const formData = new FormData();
-                formData.append('pdfFile', file);
-                formData.append('password', password);
-
-                const response = await fetch('/encrypt-pdf', {
-                    method: 'POST',
-                    body: formData
+                // 1. Membaca file PDF ke dalam bentuk ArrayBuffer secara lokal
+                const fileReader = new FileReader();
+                const fileData = await new Promise((resolve, reject) => {
+                    fileReader.onload = () => resolve(fileReader.result);
+                    fileReader.onerror = () => reject(new Error("Gagal membaca file lokal."));
+                    fileReader.readAsArrayBuffer(file);
                 });
 
-                if (!response.ok) {
-                    const errorText = await response.text();
-                    throw new Error(errorText);
-                }
+                // 2. Memuat dokumen menggunakan jendela global PDFLib
+                const pdfDoc = await PDFLib.PDFDocument.load(fileData);
 
-                const blob = await response.blob();
+                // 3. Mengenkripsi dokumen menggunakan fitur bawaan pdf-lib tanpa menyentuh server
+                const encryptedPdfBytes = await pdfDoc.save({
+                    userPassword: password,
+                    ownerPassword: password, // Mencegah perubahan hak akses dokumen tanpa password
+                    permissions: {
+                        printing: 'highResolution',
+                        modifying: false,
+                        copying: false
+                    }
+                });
+
+                // 4. Membuat blob objek dari data biner terenkripsi
+                const blob = new Blob([encryptedPdfBytes], { type: 'application/pdf' });
                 const url = window.URL.createObjectURL(blob);
 
                 const a = document.createElement('a');
@@ -191,7 +200,7 @@
 
             } catch (err) {
                 status.className = 'text-sm text-center text-red-500';
-                status.textContent = `❌ Gagal memproses: ${err.message}`;
+                status.textContent = `❌ Gagal memproses: ${err.message}. Pastikan file PDF tidak rusak/terkunci sebelumnya.`;
                 console.error(err);
             } finally {
                 btn.disabled = false;
