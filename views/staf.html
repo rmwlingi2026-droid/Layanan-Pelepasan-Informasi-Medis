@@ -130,82 +130,73 @@
         }
 
         async function uploadPDF() {
-            const fileInput = document.getElementById('pdfFile');
-            const password = document.getElementById('password').value;
-            const btn = document.getElementById('submitBtn');
-            const status = document.getElementById('status');
+    const fileInput = document.getElementById('pdfFile');
+    const password = document.getElementById('password').value;
+    const btn = document.getElementById('submitBtn');
+    const status = document.getElementById('status');
 
-            if (!fileInput.files[0]) {
-                status.className = 'text-sm text-center text-red-500';
-                status.textContent = '⚠️ Silakan pilih file PDF terlebih dahulu.';
-                return;
-            }
+    if (!fileInput.files[0]) {
+        status.className = 'text-sm text-center text-red-500';
+        status.textContent = '⚠️ Silakan pilih file PDF terlebih dahulu.';
+        return;
+    }
 
-            if (password.length < 6) {
-                status.className = 'text-sm text-center text-red-500';
-                status.textContent = '⚠️ Password minimal 6 karakter.';
-                return;
-            }
+    if (password.length < 6) {
+        status.className = 'text-sm text-center text-red-500';
+        status.textContent = '⚠️ Password minimal 6 karakter.';
+        return;
+    }
 
-            const file = fileInput.files[0];
+    const file = fileInput.files[0];
 
-            if (file.size > 4.5 * 1024 * 1024) {
-                status.className = 'text-sm text-center text-red-500';
-                status.textContent = '⚠️ Ukuran file terlalu besar (Maksimal 4.5 MB).';
-                return;
-            }
+    if (file.size > 4.5 * 1024 * 1024) {
+        status.className = 'text-sm text-center text-red-500';
+        status.textContent = '⚠️ Ukuran file terlalu besar (Maksimal 4.5 MB).';
+        return;
+    }
 
-            btn.disabled = true;
-            status.className = 'text-sm text-center text-gray-500';
-            status.innerHTML = '<span class="spinner"></span>Memproses enkripsi aman langsung di browser...';
+    btn.disabled = true;
+    status.className = 'text-sm text-center text-gray-500';
+    status.innerHTML = '<span class="spinner"></span>Memproses dan mengunci PDF...';
 
-            try {
-                // 1. Membaca file PDF ke dalam bentuk ArrayBuffer secara lokal
-                const fileReader = new FileReader();
-                const fileData = await new Promise((resolve, reject) => {
-                    fileReader.onload = () => resolve(fileReader.result);
-                    fileReader.onerror = () => reject(new Error("Gagal membaca file lokal."));
-                    fileReader.readAsArrayBuffer(file);
-                });
+    try {
+        const formData = new FormData();
+        formData.append('pdfFile', file);
+        formData.append('password', password);
 
-                // 2. Memuat dokumen menggunakan jendela global PDFLib
-                const pdfDoc = await PDFLib.PDFDocument.load(fileData);
+        const response = await fetch('/encrypt-pdf', {
+            method: 'POST',
+            body: formData
+        });
 
-                // 3. Mengenkripsi dokumen menggunakan fitur bawaan pdf-lib tanpa menyentuh server
-                const encryptedPdfBytes = await pdfDoc.save({
-                    userPassword: password,
-                    ownerPassword: password, // Mencegah perubahan hak akses dokumen tanpa password
-                    permissions: {
-                        printing: 'highResolution',
-                        modifying: false,
-                        copying: false
-                    }
-                });
-
-                // 4. Membuat blob objek dari data biner terenkripsi
-                const blob = new Blob([encryptedPdfBytes], { type: 'application/pdf' });
-                const url = window.URL.createObjectURL(blob);
-
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `TERKUNCI_${file.name}`;
-                document.body.appendChild(a);
-                a.click();
-                a.remove();
-
-                window.URL.revokeObjectURL(url);
-
-                document.getElementById('panel-form').classList.add('hidden');
-                document.getElementById('panel-success').classList.remove('hidden');
-
-            } catch (err) {
-                status.className = 'text-sm text-center text-red-500';
-                status.textContent = `❌ Gagal memproses: ${err.message}. Pastikan file PDF tidak rusak/terkunci sebelumnya.`;
-                console.error(err);
-            } finally {
-                btn.disabled = false;
-            }
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(errorText);
         }
+
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `TERKUNCI_${file.name}`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+
+        window.URL.revokeObjectURL(url);
+
+        document.getElementById('panel-form').classList.add('hidden');
+        document.getElementById('panel-success').classList.remove('hidden');
+
+    } catch (err) {
+        status.className = 'text-sm text-center text-red-500';
+        status.textContent = `❌ Gagal memproses: ${err.message}`;
+        console.error(err);
+    } finally {
+        btn.disabled = false;
+    }
+}
     </script>
 </body>
 </html>
