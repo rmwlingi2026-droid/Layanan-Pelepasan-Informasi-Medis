@@ -17,6 +17,10 @@ const upload = multer({
     limits: { fileSize: MAX_FILE_SIZE } 
 });
 
+function isEncryptedPdf(buffer) {
+    return buffer.includes(Buffer.from('/Encrypt'));
+}
+
 app.use(express.urlencoded({ extended: true }));
 
 // ================== HALAMAN UTAMA ==================
@@ -101,9 +105,23 @@ app.post('/encrypt-pdf', (req, res, next) => {
                 password: password
             })
         });
+        const processText = await processRes.text();
         if (!processRes.ok) {
-            const errText = await processRes.text();
+            const errText = processText || processRes.statusText;
             throw new Error(`Gagal proses: ${processRes.status} - ${errText}`);
+        }
+
+        let processResult = {};
+        if (processText) {
+            try {
+                processResult = JSON.parse(processText);
+            } catch (parseError) {
+                throw new Error('Respons proses dari ILovePDF tidak valid.');
+            }
+        }
+
+        if (processResult.status && processResult.status !== 'TaskSuccess') {
+            throw new Error(`Proses PDF belum berhasil: ${processResult.status}`);
         }
 
         // Step 4: Download hasil
@@ -114,6 +132,10 @@ app.post('/encrypt-pdf', (req, res, next) => {
 
         // ✅ Gunakan arrayBuffer(), bukan .buffer() (tidak ada di native fetch)
         const outputBuffer = Buffer.from(await downloadRes.arrayBuffer());
+
+        if (!isEncryptedPdf(outputBuffer)) {
+            throw new Error('PDF hasil proses belum terenkripsi. File tidak dikirim agar tidak terbuka tanpa password.');
+        }
 
         res.setHeader('Content-Type', 'application/pdf');
         res.setHeader('Content-Disposition', `attachment; filename="PDF_Terkunci.pdf"`);
